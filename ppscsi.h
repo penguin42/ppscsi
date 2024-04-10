@@ -72,40 +72,20 @@ extern int sparcsi_detect( struct scsi_host_template *);
 
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0)
-    #define PPSC_TEMPLATE(proto){    \
-        .name = #proto,    \
-        .detect = proto##_detect,    \
-        .release = ppsc_release,    \
-        .proc_name = #proto,    \
-        .proc_info = ppsc_proc_info,    \
-        .queuecommand = ppsc_queuecommand, \
-        .eh_abort_handler = ppsc_abort,   \
-        .eh_bus_reset_handler = ppsc_reset, \
-        .eh_host_reset_handler = ppsc_reset, \
-        .bios_param = ppsc_biosparam,    \
-        .can_queue = 1,  \
-        .sg_tablesize = SG_NONE,           \
-        .cmd_per_lun = 1,                 \
-        .use_clustering = DISABLE_CLUSTERING \
-    }
-#else
-    #define PPSC_TEMPLATE(proto){    \
-        .name = #proto,    \
-        .detect = proto##_detect,    \
-        .release = ppsc_release,    \
-        .proc_name = #proto,    \
-        .queuecommand = ppsc_queuecommand, \
-        .eh_abort_handler = ppsc_abort,   \
-        .eh_bus_reset_handler = ppsc_reset, \
-        .eh_host_reset_handler = ppsc_reset, \
-        .bios_param = ppsc_biosparam,    \
-        .can_queue = 1,  \
-        .sg_tablesize = SG_NONE,           \
-        .cmd_per_lun = 1,                 \
-        .use_clustering = DISABLE_CLUSTERING \
-    }
-#endif
+#define PPSC_TEMPLATE(proto){    \
+    .module = THIS_MODULE,   \
+    .name = #proto,    \
+    .proc_name = #proto,    \
+    .queuecommand = ppsc_queuecommand, \
+    .eh_abort_handler = ppsc_abort,   \
+    .eh_bus_reset_handler = ppsc_reset, \
+    .eh_host_reset_handler = ppsc_reset, \
+    .bios_param = ppsc_biosparam,    \
+    .can_queue = 1,  \
+    .sg_tablesize = SG_NONE,           \
+    .cmd_per_lun = 1,                 \
+    .use_clustering = DISABLE_CLUSTERING \
+}
 
 /* types used by the actual driver modules */
 
@@ -324,7 +304,7 @@ struct ppsc_protocol {
 
 typedef struct ppsc_protocol PSP;
 
-extern int ppsc_detect( PSP *, struct scsi_host_template *, int);
+extern int ppsc_init( PSP *, struct scsi_host_template *, int);
 
 #ifdef PPSC_HA_MODULE
 

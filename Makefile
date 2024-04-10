@@ -1,4 +1,5 @@
-obj-m	:= ppscsi.o t348.o t358.o onscsi.o epsa2.o epst.o vpi0.o  sparcsi.o
+#obj-m	:= ppscsi.o t348.o t358.o onscsi.o epsa2.o epst.o vpi0.o  sparcsi.o
+obj-m	:= ppscsi.o epst.o
 
 KERNEL_SOURCE := /lib/modules/`uname -r`/build
 all:

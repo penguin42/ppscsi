@@ -126,6 +126,7 @@ void ppsc_make_map (char map[256], char key[5], int inv)
 	}
 }
 
+// DAG: Can go?
 void ppsc_gen_setup (STT t[], int n, char *ss)
 {
 	int j, k, sgn;
@@ -1152,7 +1153,8 @@ int ppsc_release_pha (PHA *pha)
 }
 
 
-int ppsc_detect (PSP *proto, struct scsi_host_template *tpnt, int verbose)
+// Called from the module init function of the protocol driver
+int ppsc_init (PSP *proto, struct scsi_host_template *tpnt, int verbose)
 {
 	int i, m, p, d, n, s, z;
 	struct ppsc_port_list_struct *next_port = NULL; /* shut gcc up */
@@ -1197,7 +1199,7 @@ int ppsc_detect (PSP *proto, struct scsi_host_template *tpnt, int verbose)
 		if (z == -1) z = 0;	
 
 		/* MOD_INC_USE_COUNT; */
-
+    // TODO: Should I change this to an allocation using the scsi_host_alloc below?
 		pha = &(((*proto->hosts)[i]));
 
 		pha->proto = proto;
@@ -1261,7 +1263,8 @@ int ppsc_detect (PSP *proto, struct scsi_host_template *tpnt, int verbose)
 
 		pha->tmo = PPSC_PROBE_TMO;
 
-		hreg = scsi_register(tpnt,sizeof(PHA*));
+		hreg = scsi_host_alloc(tpnt, sizeof(PHA*));
+    // TODO: Null check
 		hreg->dma_channel = -1;
 		hreg->n_io_port = 0;
 		hreg->unique_id = (unsigned long)pha; /* What should we put in here??? */
@@ -1281,7 +1284,9 @@ int ppsc_detect (PSP *proto, struct scsi_host_template *tpnt, int verbose)
 			pha->quiet = 0;		  /* enable PPSC_FAIL msgs */
 			pha->tmo = PPSC_GEN_TMO;
 			host_count++;
+      int error = scsi_add_host(pha->host_ptr, NULL);
 
+      // TODO: Check error!
 			printk("%s: %s at 0x%3x mode %d (%s) dly %d nice %d sg %d\n",
 			       pha->device,
 			       pha->ident,
@@ -1293,9 +1298,10 @@ int ppsc_detect (PSP *proto, struct scsi_host_template *tpnt, int verbose)
 			       pha->nice,
 			       hreg->sg_tablesize);
 
+      scsi_scan_host(pha->host_ptr);
 		} else {
-
-			scsi_unregister(hreg);
+			scsi_host_put(hreg);
+			pha->host_ptr = NULL;
 			ppsc_release_pha(pha);
 
 		}
@@ -1307,6 +1313,8 @@ int ppsc_release (struct Scsi_Host *host)
 {
 	PHA *pha = (PHA *) host->hostdata[0];
 
+	scsi_remove_host(pha->host_ptr);
+  scsi_host_put(pha->host_ptr);
 	return ppsc_release_pha(pha);
 }
 
@@ -1364,7 +1372,7 @@ EXPORT_SYMBOL(ppsc_abort);
 EXPORT_SYMBOL(ppsc_reset);
 EXPORT_SYMBOL(ppsc_proc_info);
 EXPORT_SYMBOL(ppsc_biosparam);
-EXPORT_SYMBOL(ppsc_detect);
+EXPORT_SYMBOL(ppsc_init);
 EXPORT_SYMBOL(ppsc_release);
 
 /* end of ppscsi.c */

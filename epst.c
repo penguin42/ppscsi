@@ -453,27 +453,20 @@ static struct ppsc_protocol epst_psp =  {
 	epst_reset_bus
 };
 
-int epst_detect (struct scsi_host_template *tpnt)
-{
-	return ppsc_detect( &epst_psp, tpnt, verbose);
-}
-
-#ifdef MODULE
-
 struct scsi_host_template	driver_template = PPSC_TEMPLATE(epst);
 
-#include "scsi_module.c"
-
-MODULE_LICENSE("GPL");
-
-#else
-
-void epst_setup (char *str, int *ints)
+static int __init epst_module_init(void)
 {
-	ppsc_gen_setup(stt,4,str);
+	ppsc_init(&epst_psp, &driver_template, 1 /* verbose */);
+  /* We don't have a great way of failing here */
+	return 0;
 }
 
-#endif
+// TODO Exit func - call ppsc_release
+
+module_init(epst_module_init);
+
+MODULE_LICENSE("GPL");
 
 /* end of epst.c */
 
