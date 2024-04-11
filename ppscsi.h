@@ -84,7 +84,7 @@ extern int sparcsi_detect( struct scsi_host_template *);
     .can_queue = 1,  \
     .sg_tablesize = SG_NONE,           \
     .cmd_per_lun = 1,                 \
-    .use_clustering = DISABLE_CLUSTERING \
+    .dma_boundary = PAGE_SIZE - 1,    \
 }
 
 /* types used by the actual driver modules */
