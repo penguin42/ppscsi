@@ -82,7 +82,7 @@ extern int sparcsi_detect( struct scsi_host_template *);
     .eh_host_reset_handler = ppsc_reset, \
     .bios_param = ppsc_biosparam,    \
     .can_queue = 1,  \
-    .sg_tablesize = SG_NONE,           \
+    .sg_tablesize = 1,           \
     .cmd_per_lun = 1,                 \
     .dma_boundary = PAGE_SIZE - 1,    \
 }
