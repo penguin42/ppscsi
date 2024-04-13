@@ -111,8 +111,9 @@ static void ppsc_detach (struct parport *port)
 
 static struct parport_driver ppsc_driver = {
 	name:	"ppscsi",
-	attach:	ppsc_attach,
-	detach:	ppsc_detach
+	match_port:	ppsc_attach,
+	detach:	ppsc_detach,
+	devmodel: true
 };
 
 void ppsc_make_map (char map[256], char key[5], int inv)
@@ -325,10 +326,13 @@ static int ppsc_register_parport (PHA *pha, int verbose)
 	while((ports)&&(ports->port->number != pha->port))
 		ports = ports->next;
 	if (ports) {
+    struct pardev_cb cb;
+    memset(&cb, 0, sizeof(cb));
 		port = ports->port;
-		pha->pardev = parport_register_device(port, pha->device,
-						      NULL, ppsc_wake_up, NULL,
-						      0, (void *)pha);
+
+    cb.wakeup = ppsc_wake_up;
+    cb.private = pha;
+    pha->pardev = parport_register_dev_model(port, pha->device, &cb, pha->port);
 	} else {
 		printk (KERN_DEBUG "%s: no such device: parport%d\n",
 			pha->device, pha->port);
