@@ -832,7 +832,7 @@ static void ppsc_cleanup (PHA *pha)
 		printk("%s: Command status %08x last phase %o\n",
 		       pha->device,cmd->result,pha->last_phase);
 
-	if (status_byte(pha->return_code) == BUSY) {
+	if ((pha->return_code & STATUS_MASK) == SAM_STAT_BUSY) {
 
 		pha->cur_cmd = cmd;
 
@@ -856,7 +856,7 @@ static void ppsc_cleanup (PHA *pha)
 	pha->tot_cmds++;
 
 	if ((cmd->cmnd[0] != REQUEST_SENSE) && 
-	    (status_byte(pha->return_code) == CHECK_CONDITION)) {
+	    ((pha->return_code & STATUS_MASK) == SAM_STAT_CHECK_CONDITION)) {
 
 		if (V_FULL) 
 			printk("%s: Requesting sense data\n",pha->device);
