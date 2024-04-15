@@ -393,7 +393,7 @@ int ppsc_command (struct scsi_cmnd *cmd)
 	return cmd->result;
 }
 
-int ppsc_queuecommand_lck (struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd *))
+int ppsc_queuecommand_lck (struct scsi_cmnd *cmd)
 {
 	PHA *pha = (PHA *) cmd->device->host->hostdata[0];
 
@@ -403,7 +403,7 @@ int ppsc_queuecommand_lck (struct scsi_cmnd *cmd, void (*done)(struct scsi_cmnd 
 	}
 
 	pha->cur_cmd = cmd;
-	pha->done = cmd->scsi_done;
+	pha->done = scsi_done;
 	pha->then = jiffies;
 
 	ppsc_do_claimed(pha,ppsc_start);
@@ -1080,21 +1080,10 @@ static int ppsc_inquire (PHA *pha, int target, char *buf)
 	ppsc_inquire_dev.id = target;
 	ppsc_inquire_cmd.device = &ppsc_inquire_dev;
 	ppsc_inquire_cmd.cmd_len = 6;
-    #if LINUX_VERSION_CODE > KERNEL_VERSION(3,13,0)
-        memcpy(ppsc_inquire_command, inq, 6);
-        ppsc_inquire_cmd.cmnd = ppsc_inquire_command;
-    #else
-        memcpy(ppsc_inquire_cmd.cmnd, inq, 6);
-    #endif
-	#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,24)
-		ppsc_inquire_cmd.sdb.table.nents = 0;
-		ppsc_inquire_cmd.sdb.table.sgl = (struct scatterlist *)buf;
-		ppsc_inquire_cmd.sdb.length = 36;
-	#else
-		ppsc_inquire_cmd.use_sg = 0;
-		ppsc_inquire_cmd.request_buffer = buf;
-		ppsc_inquire_cmd.request_bufflen = 36;
-	#endif
+    memcpy(ppsc_inquire_cmd.cmnd, inq, 6);
+	ppsc_inquire_cmd.sdb.table.nents = 0;
+	ppsc_inquire_cmd.sdb.table.sgl = (struct scatterlist *)buf;
+	ppsc_inquire_cmd.sdb.length = 36;
 
 	return ppsc_command(&ppsc_inquire_cmd);
 	
@@ -1288,13 +1277,19 @@ int ppsc_init (PSP *proto, struct scsi_host_template *tpnt, int verbose)
 		else ppsc_test_mode(pha,m);
 
 		if (pha->mode != -1) {
+            int error;
 
 			pha->quiet = 0;		  /* enable PPSC_FAIL msgs */
 			pha->tmo = PPSC_GEN_TMO;
+            error = scsi_add_host(pha->host_ptr, NULL);
+            if (error) {
+				pr_info("Failed to add ppscsi host (err=%d)\n", error);
+				scsi_host_put(pha->host_ptr);
+                ppsc_release_pha(pha);
+                continue;
+            }
 			host_count++;
-      int error = scsi_add_host(pha->host_ptr, NULL);
 
-      // TODO: Check error!
 			printk("%s: %s at 0x%3x mode %d (%s) dly %d nice %d sg %d\n",
 			       pha->device,
 			       pha->ident,
