@@ -457,14 +457,29 @@ struct scsi_host_template	driver_template = PPSC_TEMPLATE(epst);
 
 static int __init epst_module_init(void)
 {
-	ppsc_init(&epst_psp, &driver_template, 1 /* verbose */);
+	int i;
+	for(i=0;i<4;i++)
+		epst_psp.hosts[i]->host_ptr = NULL;
+
+	ppsc_init(&epst_psp, &driver_template, verbose);
   /* We don't have a great way of failing here */
 	return 0;
 }
 
-// TODO Exit func - call ppsc_release
+static void __exit epst_module_exit(void)
+{
+  int i;
+  for(i=0;i<4;i++) {
+    if (epst_psp.hosts[i]->host_ptr) {
+      ppsc_release(epst_psp.hosts[i]->host_ptr);
+      epst_psp.hosts[i]->host_ptr = NULL;
+    }
+  }
+}
+
 
 module_init(epst_module_init);
+module_exit(epst_module_exit);
 
 MODULE_LICENSE("GPL");
 
