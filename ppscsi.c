@@ -1129,7 +1129,7 @@ static void ppsc_test_mode (PHA *pha, int mode)
 		if (f)  ppsc_reset_pha(pha);
 	}
 
-	ok = (e<=0) && (f == 0);
+	ok = (e<=0) && (f == 0) && (g > 0);
 
 	if (!ok) pha->mode = old_mode;
 
