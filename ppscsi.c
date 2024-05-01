@@ -500,11 +500,15 @@ static void ppsc_select_intr (PHA *pha)
 
 static void ppsc_update_sg (PHA *pha)
 {
-	if ((!pha->cur_len) && pha->sg_count) {
+	if (V_FULL)
+	  printk("%s: ppsc_update_sg entry cur_len=%d sg_count=%d\n", pha->device, pha->cur_len, pha->sg_count);
+	while ((!pha->cur_len) && pha->sg_count) {
 		pha->sg_count--;
-		pha->sg_list++;
+		pha->sg_list = sg_next(pha->sg_list);
 		pha->cur_buf = page_address(sg_page(pha->sg_list)) + pha->sg_list->offset;
 		pha->cur_len = pha->sg_list->length;
+		if (V_FULL)
+			printk("%s: ppsc_update_sg updated cur_len=%d sg_count=%d\n", pha->device, pha->cur_len, pha->sg_count);
 	}
 }
 
@@ -614,13 +618,13 @@ static void ppsc_engine (PHA *pha)
 
 			}
 
+			ppsc_update_sg(pha);
+
 			if ((pha->bulk) && (pha->cur_len > 0 )) {
 				pha->proto->start_block(pha,pha->data_dir);
 				ppsc_transfer(pha);
 				return;
 			}
-
-			ppsc_update_sg(pha);
 
 			if (!pha->cur_len) {
 				pha->cur_len = 1;
