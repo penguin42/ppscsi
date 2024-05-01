@@ -281,7 +281,7 @@ static void ppsc_wake_up( void *p)
 	if (cont) cont(pha);
 }
 
-void ppsc_do_claimed (PHA *pha, void(*cont)(PHA *))
+static void ppsc_do_claimed (PHA *pha, void(*cont)(PHA *))
 {
 	unsigned long flags;
 
@@ -393,7 +393,7 @@ int ppsc_command (struct scsi_cmnd *cmd)
 	return cmd->result;
 }
 
-int ppsc_queuecommand_lck (struct scsi_cmnd *cmd)
+static int ppsc_queuecommand_lck (struct scsi_cmnd *cmd)
 {
 	PHA *pha = (PHA *) cmd->device->host->hostdata[0];
 
@@ -1138,7 +1138,7 @@ static void ppsc_test_mode (PHA *pha, int mode)
 }
 
 
-int ppsc_release_pha (PHA *pha)
+static int ppsc_release_pha (PHA *pha)
 {
 	if (pha->proto->release) pha->proto->release(pha);
 
@@ -1321,7 +1321,7 @@ int ppsc_release (struct Scsi_Host *host)
 	return ppsc_release_pha(pha);
 }
 
-int ppsc_initialise (void)
+static int ppsc_initialise (void)
 {
 	int i;
 
